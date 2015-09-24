@@ -1140,17 +1140,27 @@ KJUR.asn1.x509.X500Name = function(params) {
     this.asn1Array = new Array();
 
     this.setByString = function(dnStr) {
-        //var a = dnStr.split('/');
-        var aOrig = dnStr.split('/');
+        // Get a list of attribute types from the Name type. For the definition,
+        // see https://tools.ietf.org/html/rfc3280#section-4.1.2.4.
+        // This also includes the '=' character. I.e.:
+        //  'C=US/O=r1/CN=www.google.com' -> ["C=", "0=", "CN="]
         var attributeTypesAndEqual = dnStr.match(/([^=\/]+=)/g),
+            // 'a' is all the attributes an values. We use each
+            // attributeTypeAndEqual string to match just what we want, because
+            // a bigger regex for everything is too complicated.
+            //  'C=US/O=r1/CN=www.google.com' -> ["C=US", "0=r1", "CN=www.google.com"]
             a = attributeTypesAndEqual.map(function(attributeTypeAndEqual) {
                 var newMatches = dnStr.match(
+                    // 1. Match an attribute-value pair ending with a slash
+                    // FIRST. I.e. "(C=[^=]*)/"
                     "(" + attributeTypeAndEqual + "[^=]*)/" +
+                    // 2. Match an attribute-value pair ending with the
+                    // end-of-line if we didn't match 1. This would be way too
+                    // greedy to use before trying 1. first. I.e. "(CN=.*)$"
                     "|(" + attributeTypeAndEqual + ".*)$");
+                // Check to see if we matched 1 from above. If not, grab 2.
                 return newMatches[1] ? newMatches[1] : newMatches[2];
             });
-        //a.shift();
-        aOrig.shift();
         for (var i = 0; i < a.length; i++) {
             this.asn1Array.push(new KJUR.asn1.x509.RDN({'str':a[i]}));
         }
