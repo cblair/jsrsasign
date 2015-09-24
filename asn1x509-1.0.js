@@ -1140,8 +1140,17 @@ KJUR.asn1.x509.X500Name = function(params) {
     this.asn1Array = new Array();
 
     this.setByString = function(dnStr) {
-        var a = dnStr.split('/');
-        a.shift();
+        //var a = dnStr.split('/');
+        var aOrig = dnStr.split('/');
+        var attributeTypesAndEqual = dnStr.match(/([^=\/]+=)/g),
+            a = attributeTypesAndEqual.map(function(attributeTypeAndEqual) {
+                var newMatches = dnStr.match(
+                    "(" + attributeTypeAndEqual + "[^=]*)/" +
+                    "|(" + attributeTypeAndEqual + ".*)$");
+                return newMatches[1] ? newMatches[1] : newMatches[2];
+            });
+        //a.shift();
+        aOrig.shift();
         for (var i = 0; i < a.length; i++) {
             this.asn1Array.push(new KJUR.asn1.x509.RDN({'str':a[i]}));
         }
